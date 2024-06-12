@@ -11,6 +11,12 @@ class Fighter extends Phaser.Scene {
     }
 
     create() {
+
+
+        this.player1HealthBar = this.add.rectangle(180, 30, 350, 30, 0xFF0000);
+        this.player2HealthBar = this.add.rectangle(620, 30, 350, 30, 0x0000FF);
+
+
         this.player1 = new Phaser.Geom.Rectangle(100, 480, 50, 120);
         this.player1Graphics = this.add.graphics();
 
@@ -20,21 +26,8 @@ class Fighter extends Phaser.Scene {
         // Draw the rectangle
         this.player1Graphics.fillRectShape(this.player1);
 
-        this.player1punch = new Phaser.Geom.Rectangle(1000, 1000, 0, 0);
-        this.player1punchGraphics = this.add.graphics();
-
-        // Set the fill style of the rectangle
-        this.player1punchGraphics.fillStyle(0xFF0000); // Red color
     
-        this.player1punchactive = false;
-        this.player1punchtimer = 0;
-
-        this.player1punchcooldown = 100;
-
-        
-
-
-
+    
         
 
         this.player2 = new Phaser.Geom.Rectangle(600, 480, 50, 120);
@@ -46,12 +39,44 @@ class Fighter extends Phaser.Scene {
         // Draw the rectangle
         this.player2Graphics.fillRectShape(this.player2);
 
+        this.player2punch = new Phaser.Geom.Rectangle(1000, 1000, 0, 0);
+        this.player2punchGraphics = this.add.graphics();
+
+        // Set the fill style of the rectangle
+        this.player2punchGraphics.fillStyle(0x0000ff); // Red color
+
+        this.player1punch = new Phaser.Geom.Rectangle(1000, 1000, 0, 0);
+        this.player1punchGraphics = this.add.graphics();
+
+        // Set the fill style of the rectangle
+        this.player1punchGraphics.fillStyle(0xFF0000); // Red color
+
+
+        
+
         this.cursors = this.input.keyboard.addKeys({
             left: Phaser.Input.Keyboard.KeyCodes.LEFT,
             right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
             up: Phaser.Input.Keyboard.KeyCodes.UP,
             down: Phaser.Input.Keyboard.KeyCodes.DOWN
         });
+
+        this.player1punchactive = false;
+        this.player1punchtimer = 0;
+        this.player1punchcooldown = 100;
+
+        
+
+        this.player2punchactive = false;
+        this.player2punchtimer = 0;
+        this.player2punchcooldown = 100;
+
+
+        this.player1kickactive = false;
+        this.player1kicktimer = 0;
+        this.player1kickcooldown = 100;
+
+
 
         this.player1crouch = false;
         this.player2crouch = false;
@@ -64,25 +89,64 @@ class Fighter extends Phaser.Scene {
 
     update() {
 
-        if (this.collides(this.player1, this.player2)) {
-            console.log("Collides");
-        }else if(this.collides(this.player1punch, this.player2)){
-            console.log("damage");
+        if(this.collides(this.player1punch, this.player2) && this.player2health!=0){
+            this.player2health-=1;
+            this.player2HealthBar.width = (this.player2health / 100) * 350;
+
+        }
+
+        if(this.collides(this.player1, this.player2punch) && this.player1health!=0){
+            this.player1health-=1;
+            this.player1HealthBar.width = (this.player1health / 100) * 350;
+
+            console.log("player2punch collides");
+
         }
 
         
         
 
-        if (this.input.keyboard.addKey('E').isDown && this.player1punchactive === false && this.player1punchcooldown==100) {
+        if (this.input.keyboard.addKey('E').isDown && this.player1punchactive === false && this.player1punchcooldown==100 && this.player1crouch == false) {
             // Trigger punch action only if it's not already active
             this.player1punchactive = true;
+        }else if(this.input.keyboard.addKey('E').isDown && this.input.keyboard.addKey('S').isDown && this.player1crouch == true && this.player1kickactive == false && this.player1kickcooldown==100){
+            this.player1kickactive = true;
+            
         }
 
         if(this.player1punchcooldown != 100){
             this.player1punchcooldown+=5;
         }
+
+        if(this.player1kickcooldown != 100){
+            this.player1kickcooldown+=5
+        }
+
+        if (this.player1kickactive == true && this.player1crouch) {
+            this.player1punch.x = this.player1.x;
+            this.player1punch.y = this.player1.y;
+            this.player1punch.height = this.player1.height;
+
+            if (this.player1kicktimer <= 20) {
+                this.player1punchGraphics.clear();
+                this.player1punch.width = 7 * this.player1kicktimer;
+                this.player1punchGraphics.fillStyle(0xFF0000); // Red color
+                this.player1punchGraphics.fillRectShape(this.player1punch);
+                this.player1kicktimer += 1;
+            } else {
+                this.player1punch.x = 1000;
+                this.player1punch.y = 1000;
+                this.player1punchGraphics.clear();
+                this.player1kickactive = false;
+                this.player1kicktimer = 0;
+                this.player1kickcooldown = 0; // Reset kick cooldown
+            }
+        }
+
+
+
         
-        if (this.player1punchactive) {
+        if (this.player1punchactive && this.player1crouch == false) {
             // Execute punch action if active
             this.player1punch.x = this.player1.x;
             this.player1punch.y = this.player1.y;
@@ -107,26 +171,54 @@ class Fighter extends Phaser.Scene {
         }
 
 
+        //player2 punch code
+
+        if (this.input.keyboard.addKey('P').isDown && this.player2punchactive === false && this.player2punchcooldown == 100 && this.player2crouch == false) {
+            // Trigger punch action only if it's not already active
+            this.player2punchactive = true;
+        }
+        
+        if(this.player2punchcooldown != 100){
+            this.player2punchcooldown+=5;
+        }
+        
+        if (this.player2punchactive && this.player2crouch == false) {
+            // Execute punch action if active
+            this.player2punch.x = this.player2.x + this.player2.width;
+            this.player2punch.y = this.player2.y;
+            this.player2punch.height = this.player2.height / 3;
+            
+            if (this.player2punchtimer <= 20) {
+                // Control the punch animation for a certain duration
+                this.player2punchGraphics.clear();
+                this.player2punch.width = -(7 * this.player2punchtimer); // Fixed a missing 'this'
+                this.player2punchGraphics.fillStyle(0x0000ff); // Red color
+                this.player2punchGraphics.fillRectShape(this.player2punch);
+                this.player2punchtimer += 1;
+            } else {
+                this.player2punch.x = 1000;
+                this.player2punch.y = 1000;
+                // End punch animation
+                this.player2punchGraphics.clear();
+                this.player2punchactive = false; // Reset punch activation
+                this.player2punchtimer = 0; // Reset punch timer
+                this.player2punchcooldown = 0;
+            }
+        }
+        
 
 
         if (this.input.keyboard.addKey('A').isDown && this.player1punchactive == false ) {
 
             this.player1.x -= 2.5;
-            this.player1Graphics.clear();
-            this.player1Graphics.fillStyle(0xFF0000); // Red color
-            this.player1Graphics.fillRectShape(this.player1);
+            this.updateGraphics(this.player1);
+            
         }
     
         if (this.input.keyboard.addKey('D').isDown && !this.collides(this.player1, this.player2) && this.player1punchactive == false) {
 
-
-        
-
-
             this.player1.x += 2.5;
-            this.player1Graphics.clear();
-            this.player1Graphics.fillStyle(0xFF0000); // Red color
-            this.player1Graphics.fillRectShape(this.player1);
+            this.updateGraphics(this.player1);
         }
 
         if (this.input.keyboard.addKey('S').isDown && !this.player1crouch) {
@@ -135,58 +227,57 @@ class Fighter extends Phaser.Scene {
             this.player1.height /= 2;
             this.player1.y += 60
             this.player1crouch = true;
-            this.player1Graphics.clear();
-            this.player1Graphics.fillStyle(0xFF0000); // Red color
-            this.player1Graphics.fillRectShape(this.player1);
+            this.updateGraphics(this.player1);
         } else if (!this.input.keyboard.addKey('S').isDown && this.player1crouch) {
             this.player1.height *= 2;
             this.player1.y -= 60
             this.player1crouch = false;
-            this.player1Graphics.clear();
-            this.player1Graphics.fillStyle(0xFF0000); // Red color
-            this.player1Graphics.fillRectShape(this.player1);
+            this.updateGraphics(this.player1);
         }
 
         
     
         if (this.cursors.left.isDown && !(this.collides(this.player1, this.player2))) {
             this.player2.x -= 2.5;
-            this.player2Graphics.clear();
-            this.player2Graphics.fillStyle(0x0000FF); // Blue color
-            this.player2Graphics.fillRectShape(this.player2);
+            this.updateGraphics(this.player2);
         }
     
         if (this.cursors.right.isDown) {
             this.player2.x += 2.5;
-            this.player2Graphics.clear();
-            this.player2Graphics.fillStyle(0x0000FF); // Blue color
-            this.player2Graphics.fillRectShape(this.player2);
+            this.updateGraphics(this.player2);
         }
 
         if (this.cursors.down.isDown && !this.player2crouch) {
             this.player2.height /= 2;
             this.player2.y += 60
             this.player2crouch = true;
-            this.player2Graphics.clear();
-            this.player2Graphics.fillStyle(0x0000FF); // Blue color
-            this.player2Graphics.fillRectShape(this.player2);
+            this.updateGraphics(this.player2);
         } else if (!this.cursors.down.isDown && this.player2crouch) {
             this.player2.height *= 2;
             this.player2.y -= 60
             this.player2crouch = false;
-            this.player2Graphics.clear();
-            this.player2Graphics.fillStyle(0x0000FF); // Blue color
-            this.player2Graphics.fillRectShape(this.player2);
+            this.updateGraphics(this.player2);
         }
 
         //console.log(this.player2.height)
     }
 
+
+    updateGraphics(x){
+        if(x === this.player1){
+            this.player1Graphics.clear();
+            this.player1Graphics.fillStyle(0xFF0000); // Blue color
+            this.player1Graphics.fillRectShape(x);
+
+        }else if(x === this.player2){
+            this.player2Graphics.clear();
+            this.player2Graphics.fillStyle(0x0000FF); // Blue color
+            this.player2Graphics.fillRectShape(x);
+        }
+    }
+
     
-
     collides(a, b) {
-
-        
         return (
             a.x < b.x + b.width &&
             a.x + a.width > b.x &&
@@ -198,19 +289,3 @@ class Fighter extends Phaser.Scene {
 
     
 }
-
-
-/**if (this.input.keyboard.addKey('D').isDown) {
-            if(this.player1.x != this.player2.x-50){
-                this.player1.x += 2.5;
-            }
-            this.player1.x += 2.5;
-            
-        }
-
-        if (this.cursors.left.isDown) {
-            if(this.player2.x != this.player1.x+50){
-                this.player2.x -= 2.5;
-            }
-            this.player2.x -= 2.5;
-        } **/

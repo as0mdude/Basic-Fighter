@@ -7,7 +7,7 @@ class Fighter extends Phaser.Scene {
     // Use preload to load art and sound assets before the scene starts running.
     preload() {
         // update instruction text
-        document.getElementById('description').innerHTML = '<h2>fighter.js<br>fighter</h2>'
+        document.getElementById('description').innerHTML = '<h2>Player 1 controls: (A) to move left, (D) to move right, (S) to crouch, (E) to punch, (E) and (S) to kick<br>Player 2 controls: (left arrow) to move left, (right arrow) to move right, (down arrow) to crouch, (P) to punch, (P) and (down arrow) to kick</h2>'
     }
 
     create() {
@@ -136,7 +136,7 @@ class Fighter extends Phaser.Scene {
         if(this.collides(this.player1punch, this.player2) && this.player2health!=0){
             this.player2health-=1;
             this.player2HealthBar.width = (this.player2health / 100) * 350;
-            
+
             console.log("player2punch collides");
         }
 

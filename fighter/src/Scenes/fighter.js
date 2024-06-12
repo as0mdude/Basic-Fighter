@@ -76,6 +76,10 @@ class Fighter extends Phaser.Scene {
         this.player1kicktimer = 0;
         this.player1kickcooldown = 100;
 
+        this.player2kickactive = false;
+        this.player2kicktimer = 0;
+        this.player2kickcooldown = 100;
+
 
 
         this.player1crouch = false;
@@ -85,14 +89,55 @@ class Fighter extends Phaser.Scene {
         this.player2health = 100;
 
         console.log("test");
+
+
+        this.titleText = this.add.text(80, 250, 'Basic Fighter Test \nby Vincent Fu \n \nPress "V" to start the game.', {
+            fontSize: '30px',
+            fill: '#FF0000',
+            fontFamily: "Arial"
+        })
+
+        this.initialpause = true;
+
+        this.endText = this.add.text(75, 250, 'Game over! \n Press "R" to restart the game. \n Game was designed and programmed by Vincent Fu \n for CMPM-120', {
+            fontSize: '30px',
+            fill: '#FF0000',
+            fontFamily: "Arial"
+        })
+
+        this.endText.visible = false;
+
+        
+        
+
+        
+
+        
+
+        
+
+        
     }
 
     update() {
 
+        
+        
+
+        if (this.input.keyboard.addKey('V').isDown){
+            game.loop.wake()
+            this.initialpause = false;
+            this.titleText.visible = false;
+
+        }
+
+        
+
         if(this.collides(this.player1punch, this.player2) && this.player2health!=0){
             this.player2health-=1;
             this.player2HealthBar.width = (this.player2health / 100) * 350;
-
+            
+            console.log("player2punch collides");
         }
 
         if(this.collides(this.player1, this.player2punch) && this.player1health!=0){
@@ -101,6 +146,17 @@ class Fighter extends Phaser.Scene {
 
             console.log("player2punch collides");
 
+        }
+
+        
+
+        if(this.player1health <= 0 || this.player2health <= 0){
+
+            this.endText.visible = true;
+
+            if(this.input.keyboard.addKey('R').isDown) {
+                        this.scene.restart();
+            }
         }
 
         
@@ -129,7 +185,7 @@ class Fighter extends Phaser.Scene {
 
             if (this.player1kicktimer <= 20) {
                 this.player1punchGraphics.clear();
-                this.player1punch.width = 7 * this.player1kicktimer;
+                this.player1punch.width = 4.5 * this.player1kicktimer;
                 this.player1punchGraphics.fillStyle(0xFF0000); // Red color
                 this.player1punchGraphics.fillRectShape(this.player1punch);
                 this.player1kicktimer += 1;
@@ -176,10 +232,37 @@ class Fighter extends Phaser.Scene {
         if (this.input.keyboard.addKey('P').isDown && this.player2punchactive === false && this.player2punchcooldown == 100 && this.player2crouch == false) {
             // Trigger punch action only if it's not already active
             this.player2punchactive = true;
+        }else if(this.input.keyboard.addKey('P').isDown && this.cursors.down.isDown && this.player2crouch == true  && this.player2kickactive == false && this.player2kickcooldown == 100 ){
+            this.player2kickactive = true;
         }
         
         if(this.player2punchcooldown != 100){
             this.player2punchcooldown+=5;
+        }
+
+        if (this.player2kickcooldown != 100) {
+            this.player2kickcooldown += 5; // Increment kick cooldown
+        }
+
+        if (this.player2kickactive == true && this.player2crouch) {
+            this.player2punch.x = this.player2.x + this.player2.width;
+            this.player2punch.y = this.player2.y;
+            this.player2punch.height = this.player2.height;
+
+            if (this.player2kicktimer <= 20) {
+                this.player2punchGraphics.clear();
+                this.player2punch.width = -4.5 * this.player2kicktimer;
+                this.player2punchGraphics.fillStyle(0x0000FF); // Blue color
+                this.player2punchGraphics.fillRectShape(this.player2punch);
+                this.player2kicktimer += 1;
+            } else {
+                this.player2punch.x = 1000;
+                this.player2punch.y = 1000;
+                this.player2punchGraphics.clear();
+                this.player2kickactive = false;
+                this.player2kicktimer = 0;
+                this.player2kickcooldown = 0; // Reset kick cooldown
+            }
         }
         
         if (this.player2punchactive && this.player2crouch == false) {
@@ -208,20 +291,20 @@ class Fighter extends Phaser.Scene {
         
 
 
-        if (this.input.keyboard.addKey('A').isDown && this.player1punchactive == false ) {
+        if (this.input.keyboard.addKey('A').isDown && this.player1punchactive == false && !this.initialpause) {
 
             this.player1.x -= 2.5;
             this.updateGraphics(this.player1);
             
         }
     
-        if (this.input.keyboard.addKey('D').isDown && !this.collides(this.player1, this.player2) && this.player1punchactive == false) {
+        if (this.input.keyboard.addKey('D').isDown && !this.collides(this.player1, this.player2) && this.player1punchactive == false && !this.initialpause) {
 
             this.player1.x += 2.5;
             this.updateGraphics(this.player1);
         }
 
-        if (this.input.keyboard.addKey('S').isDown && !this.player1crouch) {
+        if (this.input.keyboard.addKey('S').isDown && !this.player1crouch && !this.initialpause) {
 
             
             this.player1.height /= 2;
@@ -237,17 +320,17 @@ class Fighter extends Phaser.Scene {
 
         
     
-        if (this.cursors.left.isDown && !(this.collides(this.player1, this.player2))) {
+        if (this.cursors.left.isDown && !(this.collides(this.player1, this.player2)) && !this.initialpause) {
             this.player2.x -= 2.5;
             this.updateGraphics(this.player2);
         }
     
-        if (this.cursors.right.isDown) {
+        if (this.cursors.right.isDown && !this.initialpause) {
             this.player2.x += 2.5;
             this.updateGraphics(this.player2);
         }
 
-        if (this.cursors.down.isDown && !this.player2crouch) {
+        if (this.cursors.down.isDown && !this.player2crouch && !this.initialpause) {
             this.player2.height /= 2;
             this.player2.y += 60
             this.player2crouch = true;
@@ -260,6 +343,9 @@ class Fighter extends Phaser.Scene {
         }
 
         //console.log(this.player2.height)
+
+
+        
     }
 
 
